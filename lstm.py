@@ -1,5 +1,6 @@
 """ This module prepares midi file data and feeds it to the neural
     network for training """
+from sys import argv
 import glob
 import pickle
 import numpy
@@ -11,6 +12,7 @@ from keras.layers import LSTM
 from keras.layers import Activation
 from keras.utils import np_utils
 from keras.callbacks import ModelCheckpoint
+from keras.models import load_model
 
 def train_network():
     """ Train a Neural Network to generate music """
@@ -21,7 +23,17 @@ def train_network():
 
     network_input, network_output = prepare_sequences(notes, n_vocab)
 
-    model = create_network(network_input, n_vocab)
+    if argv[1]:
+        try:
+            print("Loading model " + argv[1])
+            model = load_model(argv[1])
+            print("Model loaded")
+        except NameError:
+            print("Model " + argv[1] + " not found")
+
+
+    if model is None:
+        model = create_network(network_input, n_vocab)
 
     train(model, network_input, network_output)
 
@@ -86,6 +98,7 @@ def prepare_sequences(notes, n_vocab):
 
 def create_network(network_input, n_vocab):
     """ create the structure of the neural network """
+    print("Creating new network")
     model = Sequential()
     model.add(LSTM(
         512,
