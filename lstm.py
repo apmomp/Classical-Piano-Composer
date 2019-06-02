@@ -23,7 +23,9 @@ def train_network():
 
     network_input, network_output = prepare_sequences(notes, n_vocab)
 
-    if argv[1]:
+    model = None
+
+    if len(argv) > 1:
         try:
             print("Loading model " + argv[1])
             model = load_model(argv[1])
@@ -54,11 +56,20 @@ def get_notes():
         except: # file has notes in a flat structure
             notes_to_parse = midi.flat.notes
 
+
         for element in notes_to_parse:
             if isinstance(element, note.Note):
-                notes.append(str(element.pitch))
+                dType = element.duration.type
+                notes.append(str(element.pitch) + ":" + dType)
+            elif isinstance(element, note.Rest):
+                dType = element.duration.type
+                notes.append(':' + dType)
             elif isinstance(element, chord.Chord):
-                notes.append('.'.join(str(n) for n in element.normalOrder))
+                dType = element.duration.type
+                curNote = '.'.join(str(n) for n in element.normalOrder) + ":" + dType
+                # print(curNote)
+                notes.append(curNote)
+        print(notes)
 
     with open('data/notes', 'wb') as filepath:
         pickle.dump(notes, filepath)
@@ -129,7 +140,8 @@ def train(model, network_input, network_output):
     )
     callbacks_list = [checkpoint]
 
-    model.fit(network_input, network_output, epochs=200, batch_size=64, callbacks=callbacks_list)
+    #model.fit(network_input, network_output, epochs=200, batch_size=512, callbacks=callbacks_list)
+    model.fit(network_input, network_output, epochs=1000, batch_size=64, callbacks=callbacks_list)
 
 if __name__ == '__main__':
     train_network()
